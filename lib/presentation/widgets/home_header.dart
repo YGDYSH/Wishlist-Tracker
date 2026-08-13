@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 
 class HomeHeader extends StatelessWidget {
@@ -22,9 +21,12 @@ class HomeHeader extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: AppDimens.spacingXs),
-          const Text(
+          Text(
             'Pantau target barang yang ingin kamu beli.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

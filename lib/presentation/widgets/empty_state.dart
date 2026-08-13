@@ -40,10 +40,13 @@ class EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppDimens.spacingSm),
-          const Text(
+          Text(
             'Tambahkan barang yang ingin kamu beli dan mulai pantau tabungannya.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: AppDimens.spacingLg),
           FilledButton.icon(

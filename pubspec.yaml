@@ -40,6 +40,11 @@ dependencies:
   uuid: ^4.6.0
   http: ^1.6.0
   image_picker: ^1.2.3
+  fl_chart: ^0.70.0
+  flutter_local_notifications: ^18.0.0
+  flutter_local_notifications_windows: ^1.0.0-dev.3
+  share_plus: ^10.1.0
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:

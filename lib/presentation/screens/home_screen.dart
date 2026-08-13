@@ -5,6 +5,9 @@ import '../../data/models/wishlist_item.dart';
 import '../../data/repositories/api_repository.dart';
 import '../../data/repositories/wishlist_repository.dart';
 import '../../services/session_service.dart';
+import '../../services/theme_service.dart';
+import '../../services/notification_service.dart';
+import '../../services/sync_service.dart';
 import '../helpers.dart';
 import '../widgets/dashboard_summary.dart';
 import '../widgets/empty_state.dart';
@@ -54,7 +57,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _apiError = null;
     });
     try {
+      // 1) Push pending local changes to the server (two-way sync).
+      await SyncService.pushAll();
+      // 2) Pull the server list.
       final list = await ApiRepository.getWishlists(userId);
+      // 3) Merge remote items into local Hive so both stores converge.
+      await SyncService.mergeRemote(list);
       if (!mounted) return;
       setState(() {
         _apiWishlists = list;
@@ -135,22 +143,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openForm([WishlistItem? existing]) async {
-    await Navigator.of(context).push(
+    final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) =>
             WishlistFormScreen(repository: _repository, existingItem: existing),
       ),
     );
+    if (result == true && mounted) {
+      NotificationService.rescheduleAllReminders();
+    }
   }
 
   Future<void> _openDetail(WishlistItem item) async {
-    final deleted = await Navigator.of(context).push(
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) =>
             WishlistDetailScreen(repository: _repository, item: item),
       ),
     );
-    if (deleted == true && mounted) {
+    if (result == true && mounted) {
+      NotificationService.rescheduleAllReminders();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Wishlist berhasil dihapus')),
       );
@@ -166,25 +178,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(SessionService.userName ?? 'Wishlist Tracker'),
-        actions: [
-          IconButton(
-            onPressed: _apiLoading ? null : _loadApiWishlists,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Muat ulang dari server',
+    return ValueListenableBuilder(
+      valueListenable: ThemeService.isDark,
+      builder: (context, isDark, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(SessionService.userName ?? 'Wishlist Tracker'),
+            actions: [
+              IconButton(
+                onPressed: () => ThemeService.toggleTheme(),
+                icon: Icon(
+                  isDark ? Icons.dark_mode : Icons.light_mode,
+                  size: 22,
+                ),
+                tooltip: 'Theme',
+              ),
+              IconButton(
+                onPressed: _apiLoading ? null : _loadApiWishlists,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Muat ulang dari server',
+              ),
+              IconButton(
+                onPressed: _confirmLogout,
+                icon: const Icon(Icons.logout),
+                tooltip: 'Logout',
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: _confirmLogout,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+          body: child!,
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _openForm(),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('Tambah'),
           ),
-        ],
-      ),
-      body: SafeArea(
+        );
+      },
+      child: SafeArea(
         child: ValueListenableBuilder(
           valueListenable: _repository.listenable,
           builder: (context, box, child) {
@@ -234,17 +267,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.search_off_rounded,
                               size: 48,
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(height: AppDimens.spacingMd),
                             Text(
                               'Tidak ditemukan wishlist yang sesuai.',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -273,13 +306,6 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah'),
-      ),
     );
   }
 }
@@ -305,14 +331,15 @@ class _ApiStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     late final Color background;
     late final Color foreground;
     late final IconData icon;
     late final String text;
 
     if (loading) {
-      background = AppColors.surfaceVariant;
-      foreground = AppColors.textSecondary;
+      background = colorScheme.surfaceContainerHighest;
+      foreground = colorScheme.onSurfaceVariant;
       icon = Icons.cloud_sync_outlined;
       text = 'Memuat wishlist dari server...';
     } else if (error != null) {
@@ -322,7 +349,7 @@ class _ApiStatusBanner extends StatelessWidget {
       text = error!;
     } else {
       background = AppColors.secondary.withValues(alpha: 0.12);
-      foreground = AppColors.textPrimary;
+      foreground = colorScheme.onSurface;
       icon = Icons.cloud_done_outlined;
       text = 'Server: $count wishlist tersinkron';
     }
@@ -445,26 +472,27 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.surfaceVariant),
+          border: Border.all(color: colorScheme.surfaceContainerHighest),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: AppColors.textPrimary),
+            Icon(icon, size: 16, color: colorScheme.onSurface),
             const SizedBox(width: 4),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ],
@@ -486,10 +514,11 @@ class _SortSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -507,7 +536,7 @@ class _SortSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: AppDimens.spacingMd),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -548,10 +577,11 @@ class _FilterSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -569,7 +599,7 @@ class _FilterSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: AppDimens.spacingMd),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

@@ -175,4 +175,38 @@ class ApiService {
           : const [],
     );
   }
+
+  /// Pushes a wishlist item to the server (create or update).
+  static Future<ApiResult<Map<String, dynamic>>> saveWishlist({
+    required int userId,
+    required Map<String, dynamic> item,
+  }) {
+    return _run(
+      () => http.post(
+        ApiConfig.wishlistSave(),
+        headers: _jsonHeaders,
+        body: jsonEncode({'user_id': userId, 'item': item}),
+      ),
+      parse: (body) => body['data'] is Map<String, dynamic>
+          ? body['data'] as Map<String, dynamic>
+          : null,
+    );
+  }
+
+  /// Deletes a wishlist item on the server.
+  static Future<ApiResult<Map<String, dynamic>>> deleteWishlist({
+    required int userId,
+    required String itemId,
+  }) {
+    return _run(
+      () => http.post(
+        ApiConfig.wishlistDelete(userId),
+        headers: _jsonHeaders,
+        body: jsonEncode({'id': itemId}),
+      ),
+      parse: (body) => body['data'] is Map<String, dynamic>
+          ? body['data'] as Map<String, dynamic>
+          : null,
+    );
+  }
 }

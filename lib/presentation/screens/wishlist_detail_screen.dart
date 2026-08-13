@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -6,6 +7,7 @@ import '../../../data/models/wishlist_item.dart';
 import '../../../data/models/savings_entry.dart';
 import '../../../data/repositories/wishlist_repository.dart';
 import '../../../data/repositories/savings_repository.dart';
+import '../../../services/notification_service.dart';
 import '../helpers.dart';
 import '../widgets/add_funds_sheet.dart';
 import '../widgets/status_badge.dart';
@@ -108,6 +110,15 @@ class _WishlistDetailScreenState extends State<WishlistDetailScreen> {
     }
   }
 
+  void _duplicateItem() async {
+    final newItem = _item.copyForDuplicate(const Uuid().v4());
+    await widget.repository.add(newItem);
+    if (mounted) {
+      NotificationService.rescheduleAllReminders();
+    }
+    _showSnackBar('Wishlist "${newItem.name}" berhasil diduplikat');
+  }
+
   @override
   Widget build(BuildContext context) {
     final reach = _item.isTargetReached;
@@ -115,14 +126,19 @@ class _WishlistDetailScreenState extends State<WishlistDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_item.name),
-        actions: [
-          IconButton(
-            onPressed: _navigateToEdit,
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit',
-          ),
-          const SizedBox(width: 4),
-        ],
+actions: [
+            IconButton(
+              onPressed: _navigateToEdit,
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit',
+            ),
+            IconButton(
+              onPressed: _duplicateItem,
+              icon: const Icon(Icons.copy_outlined),
+              tooltip: 'Duplikat',
+            ),
+            const SizedBox(width: 4),
+          ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimens.pagePadding),
@@ -187,6 +203,7 @@ class _ProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final reach = item.isTargetReached;
     final target = item.targetPrice ?? 0;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       child: Padding(
@@ -205,7 +222,7 @@ class _ProgressCard extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: item.progressFraction,
                       strokeWidth: 14,
-                      backgroundColor: AppColors.surfaceVariant,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       color: reach ? AppColors.secondary : AppColors.primary,
                     ),
                   ),
@@ -214,18 +231,18 @@ class _ProgressCard extends StatelessWidget {
                     children: [
                       Text(
                         '${item.progressPercentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'tercapai',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textSecondary,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -249,19 +266,21 @@ class _ProgressCard extends StatelessWidget {
                 Container(
                   width: 1,
                   height: 36,
-                  color: AppColors.surfaceVariant,
+                  color: colorScheme.surfaceContainerHighest,
                 ),
                 Expanded(
                   child: _MoneyTile(
                     label: 'Sisa',
                     value: Formatters.currency(item.remainingAmount),
-                    color: reach ? AppColors.secondary : AppColors.textSecondary,
+                    color: reach
+                        ? AppColors.secondary
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Container(
                   width: 1,
                   height: 36,
-                  color: AppColors.surfaceVariant,
+                  color: colorScheme.surfaceContainerHighest,
                 ),
                 Expanded(
                   child: _MoneyTile(
@@ -298,9 +317,9 @@ class _MoneyTile extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -423,6 +442,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: isMultiline
           ? CrossAxisAlignment.start
@@ -432,20 +452,23 @@ class _InfoRow extends StatelessWidget {
           width: 110,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ),
-        const Text(': ', style: TextStyle(fontSize: 14)),
+        Text(
+          ': ',
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        ),
         Expanded(
           child: Text(
             value,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: valueColor ?? AppColors.textPrimary,
+              color: valueColor ?? colorScheme.onSurface,
             ),
             maxLines: isMultiline ? 4 : 1,
             overflow: TextOverflow.ellipsis,
@@ -472,9 +495,11 @@ class _SavingsHistory extends StatelessWidget {
         maxChildSize: 0.9,
         minChildSize: 0.4,
         builder: (_, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(24),
+            ),
           ),
           child: Column(
             children: [
@@ -483,7 +508,7 @@ class _SavingsHistory extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -491,18 +516,25 @@ class _SavingsHistory extends StatelessWidget {
                 padding: const EdgeInsets.all(AppDimens.spacingLg),
                 child: Row(
                   children: [
-                    const Icon(Icons.history, size: 18, color: AppColors.primary),
+                    const Icon(
+                      Icons.history,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: AppDimens.spacingSm),
                     const Text(
                       'Semua Riwayat Dana',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const Spacer(),
                     Text(
                       '${entries.length} transaksi',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -518,7 +550,8 @@ class _SavingsHistory extends StatelessWidget {
                   ),
                   itemCount: entries.length,
                   separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (_, i) => _buildEntryTile(entries[i], entries.length - i),
+                  itemBuilder: (_, i) =>
+                      _buildEntryTile(context, entries[i], entries.length - i),
                 ),
               ),
             ],
@@ -528,7 +561,12 @@ class _SavingsHistory extends StatelessWidget {
     );
   }
 
-  static Widget _buildEntryTile(SavingsEntry e, int count) {
+  static Widget _buildEntryTile(
+    BuildContext context,
+    SavingsEntry e,
+    int count,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spacingSm),
       child: Row(
@@ -566,9 +604,9 @@ class _SavingsHistory extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${e.formattedDate} • ${e.formattedTime}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -621,12 +659,17 @@ class _SavingsHistory extends StatelessWidget {
           ),
           children: [
             if (entries.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppDimens.spacingMd),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimens.spacingMd,
+                ),
                 child: Center(
                   child: Text(
                     'Belum ada riwayat penambahan dana',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               )
@@ -636,7 +679,7 @@ class _SavingsHistory extends StatelessWidget {
                 final count = entries.length - i;
                 return Column(
                   children: [
-                    _buildEntryTile(e, count),
+                    _buildEntryTile(context, e, count),
                     if (i < preview.length - 1) const Divider(height: 1),
                   ],
                 );

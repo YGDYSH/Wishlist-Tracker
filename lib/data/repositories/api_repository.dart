@@ -59,6 +59,49 @@ class ApiRepository {
     final rows = result.data ?? const [];
     return rows.map(_fromApiJson).toList();
   }
+
+  /// Pushes a local wishlist item to the server.
+  static Future<void> saveWishlist({
+    required int userId,
+    required WishlistItem item,
+  }) async {
+    final result = await ApiService.saveWishlist(
+      userId: userId,
+      item: _toApiJson(item),
+    );
+    if (!result.success) {
+      throw ApiException(result.message);
+    }
+  }
+
+  /// Deletes a wishlist item on the server.
+  static Future<void> deleteWishlist({
+    required int userId,
+    required String itemId,
+  }) async {
+    final result = await ApiService.deleteWishlist(
+      userId: userId,
+      itemId: itemId,
+    );
+    if (!result.success) {
+      throw ApiException(result.message);
+    }
+  }
+
+  static Map<String, dynamic> _toApiJson(WishlistItem item) {
+    String? dateToString(DateTime? date) => date?.toIso8601String();
+
+    return {
+      'id': item.id.startsWith('api_') ? item.id.substring(4) : item.id,
+      'name': item.name,
+      'notes': item.description,
+      'target_price': item.targetPrice ?? 0,
+      'saved_amount': item.savedAmount,
+      'category': item.category.label.toLowerCase(),
+      'target_date': dateToString(item.targetDate),
+      'created_at': item.createdAt.toIso8601String(),
+    };
+  }
 }
 
 class ApiException implements Exception {

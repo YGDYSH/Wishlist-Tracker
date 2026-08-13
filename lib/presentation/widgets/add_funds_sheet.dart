@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/wishlist_item.dart';
 import '../../data/models/savings_entry.dart';
 import '../../data/repositories/wishlist_repository.dart';
 import '../../data/repositories/savings_repository.dart';
+import '../../services/notification_service.dart';
 
 class AddFundsSheet extends StatefulWidget {
   final WishlistItem item;
@@ -54,6 +54,7 @@ class _AddFundsSheetState extends State<AddFundsSheet> {
         addedAt: DateTime.now(),
       ),
     );
+    NotificationService.rescheduleAllReminders();
     widget.onAdded?.call(finalAmount);
     widget.onDismissed?.call();
     Navigator.of(context).pop();
@@ -67,9 +68,9 @@ class _AddFundsSheetState extends State<AddFundsSheet> {
     final maxText = Formatters.currency(maxAdditional);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.viewInsetsOf(context).bottom,
@@ -88,7 +89,7 @@ class _AddFundsSheetState extends State<AddFundsSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: AppDimens.spacingMd),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -100,17 +101,17 @@ class _AddFundsSheetState extends State<AddFundsSheet> {
             const SizedBox(height: AppDimens.spacingSm),
             Text(
               'Terkumpul saat ini: ${Formatters.currency(widget.item.savedAmount)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             if (widget.item.targetPrice != null && maxAdditional > 0) ...[
               Text(
                 'Sisa target: $maxText',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

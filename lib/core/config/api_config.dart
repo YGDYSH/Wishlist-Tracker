@@ -29,6 +29,13 @@ class ApiConfig {
   static Uri wishlists(int userId) =>
       Uri.parse('$baseUrl/wishlist/index.php?user_id=$userId');
 
+  /// Pushes a wishlist item (create or update) to the server.
+  static Uri wishlistSave() => Uri.parse('$baseUrl/wishlist/save.php');
+
+  /// Deletes a wishlist item on the server.
+  static Uri wishlistDelete(int userId) =>
+      Uri.parse('$baseUrl/wishlist/delete.php?user_id=$userId');
+
   /// How long to wait before giving up on a request.
   static const Duration timeout = Duration(seconds: 15);
 }

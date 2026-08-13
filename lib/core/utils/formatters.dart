@@ -13,4 +13,13 @@ class Formatters {
     }
     return 'Rp${buffer.toString()}';
   }
+
+  static String currencyShort(double amount) {
+    if (amount >= 1000000) {
+      return 'Rp${(amount / 1000000).toStringAsFixed(1)}jt';
+    } else if (amount >= 1000) {
+      return 'Rp${(amount / 1000).toStringAsFixed(1)}rb';
+    }
+    return currency(amount);
+  }
 }

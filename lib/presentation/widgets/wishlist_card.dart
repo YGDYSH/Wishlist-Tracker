@@ -18,6 +18,7 @@ class WishlistCard extends StatelessWidget {
     final target = item.targetPrice ?? 0;
     final remaining = item.remainingAmount;
     final overdue = item.isOverdue();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -39,11 +40,11 @@ class WishlistCard extends StatelessWidget {
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => Container(
-                          color: AppColors.surfaceVariant,
+                          color: colorScheme.surfaceContainerHighest,
                           alignment: Alignment.center,
-                          child: const Icon(
+                          child: Icon(
                             Icons.broken_image_outlined,
-                            color: AppColors.textSecondary,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -82,7 +83,7 @@ class WishlistCard extends StatelessWidget {
                         fontWeight: overdue ? FontWeight.w700 : FontWeight.w500,
                         color: overdue
                             ? AppColors.error
-                            : AppColors.textSecondary,
+                            : colorScheme.onSurfaceVariant,
                       ),
                     ),
                   if (overdue)
@@ -103,7 +104,7 @@ class WishlistCard extends StatelessWidget {
                 children: [
                   Text(
                     Formatters.currency(item.savedAmount),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
@@ -115,15 +116,17 @@ class WishlistCard extends StatelessWidget {
                       '/',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary.withValues(alpha: 0.6),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ),
                   Text(
                     Formatters.currency(target),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -137,7 +140,7 @@ class WishlistCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: item.progressFraction,
                         minHeight: 8,
-                        backgroundColor: AppColors.surfaceVariant,
+                        backgroundColor: colorScheme.surfaceContainerHighest,
                         color: reach ? AppColors.secondary : AppColors.primary,
                       ),
                     ),
@@ -148,10 +151,10 @@ class WishlistCard extends StatelessWidget {
                     child: Text(
                       '${item.progressPercentage.toStringAsFixed(0)}%',
                       textAlign: TextAlign.end,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -165,7 +168,9 @@ class WishlistCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: reach ? AppColors.secondary : AppColors.textSecondary,
+                  color: reach
+                      ? AppColors.secondary
+                      : colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -183,18 +188,19 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppDimens.radiusSm),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: colorScheme.onSurface,
         ),
       ),
     );

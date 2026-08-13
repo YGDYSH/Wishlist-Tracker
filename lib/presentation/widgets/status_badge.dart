@@ -14,7 +14,7 @@ class StatusBadge extends StatelessWidget {
 
     switch (status) {
       case WishlistStatus.mulaiMenabung:
-        color = AppColors.textSecondary;
+        color = Theme.of(context).colorScheme.outline;
         label = 'Mulai Menabung';
       case WishlistStatus.sedangBerjalan:
         color = AppColors.primary;

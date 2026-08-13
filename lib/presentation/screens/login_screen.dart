@@ -4,6 +4,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../services/api_service.dart';
 import '../../services/session_service.dart';
 import '../../services/hive_service.dart';
+import '../../services/notification_service.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,8 +56,9 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
       if (!mounted) return;
-      // Navigate to Home.
+      // Navigate to Home first, then schedule reminders in the background.
       Navigator.of(context).pushReplacementNamed('/home');
+      NotificationService.rescheduleAllReminders();
     } else {
       setState(() => _errorMessage = result.message);
     }
@@ -120,12 +122,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: AppDimens.spacingXs),
-                    const Text(
+                    Text(
                       'Masuk untuk memantau wishlist kamu',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: AppDimens.spacingXl),
@@ -179,11 +181,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Belum punya akun?',
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         TextButton(

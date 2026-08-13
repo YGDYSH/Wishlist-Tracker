@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/wishlist_item.dart';
 import '../../services/hive_service.dart';
+import '../../services/sync_service.dart';
 import 'savings_repository.dart';
 
 class WishlistRepository {
@@ -23,6 +24,7 @@ class WishlistRepository {
     );
     await _box.put(item.id, item);
     await _box.flush();
+    await SyncService.enqueue(op: 'upsert', item: item);
     log('[Hive] add done. box count: ${_box.length}');
   }
 
@@ -30,6 +32,7 @@ class WishlistRepository {
     log('[Hive] update: ${item.id} - ${item.name}');
     await _box.put(item.id, item);
     await _box.flush();
+    await SyncService.enqueue(op: 'upsert', item: item);
     log('[Hive] update done. box count: ${_box.length}');
   }
 
@@ -38,6 +41,7 @@ class WishlistRepository {
     await _box.delete(id);
     await SavingsRepository().deleteForWishlist(id);
     await _box.flush();
+    await SyncService.enqueueDelete(id);
     log('[Hive] delete done. box count: ${_box.length}');
   }
 

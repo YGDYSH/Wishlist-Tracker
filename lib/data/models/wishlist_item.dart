@@ -86,6 +86,21 @@ class WishlistItem extends HiveObject {
   }) : categoryOrNull = category,
        createdAt = createdAt ?? DateTime.now();
 
+  // Create a copy for duplication (new ID, reset savedAmount, new createdAt)
+  WishlistItem copyForDuplicate(String newId) {
+    return WishlistItem(
+      id: newId,
+      name: '$name (Copy)',
+      description: description,
+      imageUrl: imageUrl,
+      targetPrice: targetPrice,
+      savedAmount: 0.0,
+      category: category,
+      targetDate: targetDate,
+      createdAt: DateTime.now(),
+    );
+  }
+
   WishlistCategory get category => categoryOrNull ?? WishlistCategory.lainnya;
 
   set category(WishlistCategory value) => categoryOrNull = value;

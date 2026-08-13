@@ -309,7 +309,7 @@ class _WishlistFormScreenState extends State<WishlistFormScreen> {
           'Foto Barang (opsional)',
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: AppDimens.spacingSm),
@@ -318,7 +318,7 @@ class _WishlistFormScreenState extends State<WishlistFormScreen> {
           child: Container(
             height: 160,
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(AppDimens.radiusMd),
               border: Border.all(
                 color: AppColors.primary.withAlpha(80),
@@ -375,11 +375,11 @@ child: buildWishlistImage(
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'Tap untuk membuka galeri',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
